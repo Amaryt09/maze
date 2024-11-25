@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maze Game with Leaderboard</title>
+    <title>Maze Game with Leaderboard and Touch Controls</title>
     <style>
         body {
             margin: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
@@ -60,9 +61,6 @@
             display: none;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
-        #menu h1 {
-            margin: 0 0 10px;
-        }
         #menu input, #menu button {
             margin: 10px 0;
             padding: 10px;
@@ -83,9 +81,34 @@
         #menu button:hover {
             background: #00e5b8;
         }
+    #controls {
+        position: fixed;
+        bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px; /* Reduced gap for a compact layout */
+    }
+    .control-row {
+        display: flex;
+        justify-content: center;
+        gap: 5px; /* Reduced gap for buttons */
+    }
+    .control-button {
+        width: 40px; /* Smaller size */
+        height: 40px;
+        background: #00f5d4;
+        border: none;
+        border-radius: 8px; /* Smaller radius for consistency */
+        font-size: 18px; /* Adjusted font size */
+        color: #16213e;
+        cursor: pointer;
+    }
+    .control-button:hover {
+        background: #00e5b8;
+        }
         #leaderboard {
             position: fixed;
-            bottom: 10px;
+            bottom: 150px;
             right: 10px;
             background: rgba(0, 0, 0, 0.7);
             padding: 15px;
@@ -120,6 +143,18 @@
     <div id="leaderboard">
         <h2>Leaderboard</h2>
         <ol id="leaderboard-list"></ol>
+    </div>
+    <div id="controls">
+        <div class="control-row">
+            <button class="control-button" onclick="movePlayer(0, -1)">▲</button>
+        </div>
+        <div class="control-row">
+            <button class="control-button" onclick="movePlayer(-1, 0)">◀</button>
+            <button class="control-button" onclick="movePlayer(1, 0)">▶</button>
+        </div>
+        <div class="control-row">
+            <button class="control-button" onclick="movePlayer(0, 1)">▼</button>
+        </div>
     </div>
     <script>
         const mazeSize = 10;
@@ -178,7 +213,6 @@
                     timeTakenElement.textContent = `Time Taken: ${timeTaken}s`;
                     menu.style.display = "block";
 
-                    // Check if qualifies for leaderboard
                     if (leaderboard.length < 10 || timeTaken < leaderboard[leaderboard.length - 1].time) {
                         usernameInput.style.display = "block";
                     } else {
@@ -226,7 +260,6 @@
             if (e.key === "ArrowRight") movePlayer(1, 0);
         });
 
-        // Initialize game
         startTime = Date.now();
         updateLeaderboard();
         drawMaze();
