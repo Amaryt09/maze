@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Game with Leaderboard</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom right, #1a1a2e, #16213e);
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        #maze-container {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 5px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #333;
+            border-radius: 5px;
+        }
+        .wall {
+            background: #555;
+        }
+        .player {
+            background: #00f5d4;
+            animation: pulse 1s infinite;
+        }
+        .goal {
+            background: #ff006e;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1f4068;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        #menu h1 {
+            margin: 0 0 10px;
+        }
+        #menu input, #menu button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+        }
+        #menu input {
+            width: 80%;
+            background: #e0e0e0;
+            color: #333;
+        }
+        #menu button {
+            background: #00f5d4;
+            color: #16213e;
+            cursor: pointer;
+        }
+        #menu button:hover {
+            background: #00e5b8;
+        }
+        #leaderboard {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            max-width: 300px;
+            font-size: 14px;
+        }
+        #leaderboard h2 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+        #leaderboard ol {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        #leaderboard li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="maze-container"></div>
+    <div id="menu">
+        <h1>Congratulations!</h1>
+        <p id="time-taken">Time Taken: 0s</p>
+        <input id="username" type="text" placeholder="Enter your name">
+        <button onclick="saveScore()">Submit</button>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <ol id="leaderboard-list"></ol>
+    </div>
+    <script>
+        const mazeSize = 10;
+        const mazeContainer = document.getElementById("maze-container");
+        const menu = document.getElementById("menu");
+        const timeTakenElement = document.getElementById("time-taken");
+        const usernameInput = document.getElementById("username");
+        const leaderboardList = document.getElementById("leaderboard-list");
+        let playerPosition = { x: 0, y: 0 };
+        let startTime;
+        let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+        function generateMaze() {
+            return Array.from({ length: mazeSize }, () =>
+                Array.from({ length: mazeSize }, () => Math.random() > 0.7 ? "wall" : "path")
+            );
+        }
+
+        let maze = generateMaze();
+        maze[0][0] = "player"; // Start
+        maze[mazeSize - 1][mazeSize - 1] = "goal"; // End
+
+        function drawMaze() {
+            mazeContainer.innerHTML = "";
+            maze.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const div = document.createElement("div");
+                    div.classList.add("cell");
+                    if (cell === "wall") div.classList.add("wall");
+                    if (cell === "player") div.classList.add("player");
+                    if (cell === "goal") div.classList.add("goal");
+                    mazeContainer.appendChild(div);
+                });
+            });
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = playerPosition.x + dx;
+            const newY = playerPosition.y + dy;
+
+            if (
+                newX >= 0 &&
+                newX < mazeSize &&
+                newY >= 0 &&
+                newY < mazeSize &&
+                maze[newY][newX] !== "wall"
+            ) {
+                maze[playerPosition.y][playerPosition.x] = "path";
+                playerPosition = { x: newX, y: newY };
+                maze[newY][newX] = "player";
+                drawMaze();
+
+                if (newX === mazeSize - 1 && newY === mazeSize - 1) {
+                    const endTime = Date.now();
+                    const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+                    timeTakenElement.textContent = `Time Taken: ${timeTaken}s`;
+                    menu.style.display = "block";
+
+                    // Check if qualifies for leaderboard
+                    if (leaderboard.length < 10 || timeTaken < leaderboard[leaderboard.length - 1].time) {
+                        usernameInput.style.display = "block";
+                    } else {
+                        usernameInput.style.display = "none";
+                    }
+                }
+            }
+        }
+
+        function saveScore() {
+            const username = usernameInput.value || "Anonymous";
+            const time = parseFloat(timeTakenElement.textContent.replace("Time Taken: ", "").replace("s", ""));
+            leaderboard.push({ username, time });
+            leaderboard.sort((a, b) => a.time - b.time);
+            if (leaderboard.length > 10) leaderboard.pop();
+            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+            updateLeaderboard();
+            restartGame();
+        }
+
+        function updateLeaderboard() {
+            leaderboardList.innerHTML = "";
+            leaderboard.forEach((entry) => {
+                const li = document.createElement("li");
+                li.textContent = `${entry.username} - ${entry.time}s`;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        function restartGame() {
+            menu.style.display = "none";
+            usernameInput.value = "";
+            maze = generateMaze();
+            maze[0][0] = "player";
+            maze[mazeSize - 1][mazeSize - 1] = "goal";
+            playerPosition = { x: 0, y: 0 };
+            startTime = Date.now();
+            drawMaze();
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp") movePlayer(0, -1);
+            if (e.key === "ArrowDown") movePlayer(0, 1);
+            if (e.key === "ArrowLeft") movePlayer(-1, 0);
+            if (e.key === "ArrowRight") movePlayer(1, 0);
+        });
+
+        // Initialize game
+        startTime = Date.now();
+        updateLeaderboard();
+        drawMaze();
+    </script>
+</body>
+</html>
