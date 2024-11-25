@@ -5,7 +5,7 @@ Have fun playing it.
 
 # Q/A
 - How to find it?
-	- Just search school-books.vercel.app
+	- Just search school-jetbrains.vercel.app
 
 - With what was it made?
 	- It was made with only HTML.
