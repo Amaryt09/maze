@@ -13,8 +13,8 @@ Have fun playing it.
 - When are you adding updates or new games?
 	- Every 1 or 2 weeks
 
-- When is it coming for mobile?
-	- Very soon. 
+- Are there mobile controls?
+	- Yes, there are. 
 
 # Help
 If you need help join the discord:
